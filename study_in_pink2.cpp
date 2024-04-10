@@ -65,9 +65,7 @@ bool Map::isValid ( const Position & pos , MovingObject * mv_obj ) const {
      void Position::setCol(int c) { c = c;}
 
      bool Position::isEqual(Position &pos1, Position &pos2){
-    return pos1.getRow() == r &&  pos1.getCol() == c;
-        
-        //return pos1.getRow() == r && pos1.getCol() == c && pos2.getRow() == r && pos2.getCol() == c;
+     return pos1.getRow() == r && pos1.getCol() == c && pos2.getRow() == r && pos2.getCol() == c;
      }
      bool Position::isEqual(int in_r, int in_c)const{
         return in_r ==r && in_c == c;
