@@ -40,16 +40,22 @@ Map::Map(int num_rows, int num_cols, int num_walls, Position * array_walls, int 
 
  Map::~Map(){ //Xóa bản đồ 
         for (int i = 0; i < num_rows; i++){
-            delete map[i];
-            for (int j = 0; i < num_cols; j++){
+            for (int j = 0; j < num_cols; j++){
                 delete map[i][j];
             }
+            delete map[i];
         }
         delete [] map;
     }
 
 bool Map::isValid ( const Position & pos , MovingObject * mv_obj ) const {
-    if (pos == npos) {return false;}
+   int r = pos.getRow();
+   int c = pos.getCol();
+   if(map[r][c] ->getType() == FAKE_WALL && mv_obj ->getCharacter() == "Watson"){
+    FakeWall *ptr;
+    Watson *watson;
+    
+   }
 }
 
  static const Position npos = Position(-1, -1); //Điểm trả về khi input không hợp lệ 
@@ -65,25 +71,30 @@ bool Map::isValid ( const Position & pos , MovingObject * mv_obj ) const {
      void Position::setCol(int c) { c = c;}
 
      bool Position::isEqual(Position &pos1, Position &pos2){
-     return pos1.getRow() == r && pos1.getCol() == c && pos2.getRow() == r && pos2.getCol() == c;
+    //return pos1.getRow() == r &&  pos1.getCol() == c;
+        return pos1.getRow() == r && pos1.getCol() == c && pos2.getRow() == r && pos2.getCol() == c;
      }
      bool Position::isEqual(int in_r, int in_c)const{
         return in_r ==r && in_c == c;
      }
       Position::Position(const string & str_pos){
         this -> r = stoi(str_pos.substr(1, str_pos.find(',' - 1)));
-        this -> c = stoi(str_pos.substr());
+        this -> c = stoi(str_pos.substr(str_pos.find(',') + 1, str_pos.find(')') - str_pos.find(',') - 1));
       }
      string Position::str() const{return "(" + to_string(r) + "," +to_string(c) + ")";}
-
-
+     int Position::distance(Position pos) const{
+        int dis_r = pos.getRow() - this -> getRow();
+        int dis_c = pos.getCol() - this -> getCol();
+        return abs(dis_r) + abs(dis_c);
+     }
+//MovingObject
 MovingObject :: MovingObject(int index, const Position pos, Map * map, const string & name=""){
         this -> index = index;
         this -> pos = pos;
         this -> map = map;
         this -> name = name;
 }
-
+string MovingObject::getCharacter(){return name;}
 MovingObject::~MovingObject(){delete map;} //giải phóng bộ nhớ
 Position MovingObject::getNextPosition(){}
 Position MovingObject::getCurrentPosition()const {return pos;}
@@ -107,12 +118,21 @@ Sherlock::Sherlock(int index, const string & moving_rule, const Position & init_
         
     }
 
-    Position Sherlock::getNextPosition(){return pos;}
+    Position Sherlock::getNextPosition(){
+        int r = pos.getRow();
+        int c = pos.getCol();
+        switch(moving_rule[0]){
+        case 'U' : r--; break;
+        case 'D' : r++; break;
+        case 'L' : c--; break;
+        case 'R' : c++; break;
+        }
+        moving_rule = moving_rule.substr(1) + moving_rule[0];
+        if(map -> isValid(Position(r,c), this)) return Position(r,c);
+       }
     Position Sherlock::getCurrentPosition()const{return pos;}
 void Sherlock::move(){
-     Position new_position = getNextPosition();
-      if (new_position != Position::npos) {
-        pos = new_position;}
+    pos = this -> getNextPosition();
 }
  string Position::toString() const {
     return "(" + to_string(getRow()) + "," + to_string(getCol()) + ")";}
@@ -134,38 +154,77 @@ Watson::Watson(int index, const string & moving_rule, const Position & init_pos,
         if (init_hp > 500) {init_hp = 500;}
         else if (init_hp < 0) {init_hp = 0;}
 }
-Position Watson::getNextPosition(){}
-Position Watson::getCurrentPosition()const{}
+Position Watson::getNextPosition(){
+     int r = pos.getRow();
+        int c = pos.getCol();
+        switch(moving_rule[0]){
+        case 'U' : r--; break;
+        case 'D' : r++; break;
+        case 'L' : c--; break;
+        case 'R' : c++; break;
+        }
+        moving_rule = moving_rule.substr(1) + moving_rule[0];
+        if(map -> isValid(Position(r,c), this)) return Position(r,c);
+}
+Position Watson::getCurrentPosition()const{return pos;}
 
-void Watson::move(){}
+void Watson::move(){
+    pos = this -> getNextPosition();
+}
 string Watson::str() const{return ;}
 
 //Criminal 
 Criminal::Criminal(int index, const Position & init_pos, Map * map, Sherlock * sherlock, Watson * watson)
 :MovingObject(index, init_pos, map, name)
 {
-      
+    
 }
 
 
+//ArrayMovingObject
  ArrayMovingObject::ArrayMovingObject(int capacity){
-     
+     this -> capacity = capacity;
+     count = 0;
+     arr_mv_objs = new MovingObject *[capacity];
  }
 
- ArrayMovingObject::~ArrayMovingObject(){} //Tạo mảng di chuyển cho các nhân vật
+ ArrayMovingObject::~ArrayMovingObject(){
+    for(int i = 0; i < capacity; i++){
+        delete arr_mv_objs[i];
+    }
+    delete [] arr_mv_objs;
+ } //Tạo mảng di chuyển cho các nhân vật
  bool ArrayMovingObject::isFull() const {
     return count == capacity;
  }
- bool ArrayMovingObject::add ( MovingObject * mv_obj ){}
+ bool ArrayMovingObject::add ( MovingObject * mv_obj ){
+    if(isFull()) {return false;}
+    arr_mv_objs[count] = mv_obj;
+    count++;
+    return true;
+ }
  int ArrayMovingObject::size() const{} // return current number of elements in the array
 
- string ArrayMovingObject::str() const{return "ArrayMovingObject[count="+to_string(count)+";capacity="+to_string(capacity);}/*
+ string ArrayMovingObject::str() const{
+    string str =  "ArrayMovingObject[count="+to_string(count)+";capacity="+to_string(capacity);
+        for (int i = 0; i < count; i++){
+            str += arr_mv_objs[i]->str();
+        }
+        return str;
+ }/*
  chưa đủ hết, phải thêm vào return phần obj*/
 
+void Configuration::Takedata(string line){
+
+}
  Configuration::Configuration(const string & filepath){
-    string myfile;
-    ifstream Readfile(filepath);
-    Readfile.close();
+    ifstream file(filepath);
+    string line;
+    while(file.eof() == false){
+        getline(file,line);
+        Takedata(line);
+    }
+    file.close();
  } //Tạo cấu hình cho chương trình
  Configuration::~Configuration(){}
  
@@ -173,18 +232,31 @@ Criminal::Criminal(int index, const Position & init_pos, Map * map, Sherlock * s
     return "Configuration[MAP_NUM_ROWS=" + to_string(map_num_rows) +
     "\nMAP_NUM_COLS="+  to_string(map_num_cols)+
     "\nMAX_NUM_MOVING_OBJECTS=" + to_string(max_num_moving_objects)+
-    "\n ARRAY_WALLS="+ to_string(arr_walls);
+    "\n ARRAY_WALLS=" + to_string(arr_walls);
  }
 
  Robot::Robot (RobotType rb_type) : robot_type(rb_type){} //Tạo robot
  RobotType Robot::getType() const {return robot_type;}
- int Robot::RobotC ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal ){}
+ int Robot::RobotC ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal ){
+    criminal = criminal;
+ }
 
- int Robot::RobotS( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * Sherlock ){}
+ int Robot::RobotS( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock){
+    criminal = criminal;
+    sherlock = sherlock;
+ }
 
- int Robot::RobotW ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Watson * watson ){}
+ int Robot::RobotW ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Watson * watson ){
+    criminal = criminal;
+    watson = watson;
+ }
 
- int Robot::RobotSW( int index,  const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock , Watson* watson ){}
+ int Robot::RobotSW( int index,  const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock , Watson* watson ){
+    this->criminal = criminal;
+    this->sherlock = sherlock;
+    watson = watson;
+
+ }
 
 StudyPinkProgram::StudyPinkProgram(const string & config_file_path){}
 bool StudyPinkProgram::isStop()const{}
