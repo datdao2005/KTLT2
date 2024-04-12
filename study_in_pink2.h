@@ -111,6 +111,7 @@ public:
     bool isEqual(Position &pos1, Position &pos2);
     bool isEqual(int in_r, int in_c) const;
      string toString() const;
+     int distance (Position pos) const;
 };
 
 class MovingObject {
@@ -127,7 +128,8 @@ public:
     Position getCurrentPosition() const;
     virtual void move() = 0;
     virtual string str() const = 0;
-    Position new_position = getNextPosition();
+    string getCharacter ();
+    
 };
 
 class Sherlock : public MovingObject {
@@ -204,7 +206,7 @@ class ArrayMovingObject {
 private:
     // TODO
    int capacity, count;
-   ArrayMovingObject *arr_mv_objs;
+   MovingObject **arr_mv_objs;
 public:
     ArrayMovingObject(int capacity);
 
@@ -236,6 +238,7 @@ public:
     Configuration(const string & filepath);
     ~Configuration();
     string str() const;
+    void Takedata(string line);
 };
 
 // Robot, BaseItem, BaseBag,...
@@ -269,8 +272,14 @@ class Criminal_char : public Character{};
 class RobotC : public Robot{
     RobotC *robotC;
     public:
+    RobotC (int index, const Position &init_pos, Map *map, RobotType robot_type, Criminal *criminal);
+    int getDistance (Sherlock *sherlock);
+    int getDistance (Watson *watson);
 };
-class RobotS : public Robot{};
+class RobotS : public Robot{
+    RobotS(int index, const Position &init_pos, Map *map, RobotType robot_type, Criminal *criminal, Sherlock *sherlock);
+
+};
 class RobotW : public Robot{};
 class RobotSW : public Robot{};
 
