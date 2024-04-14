@@ -108,7 +108,7 @@ public:
 
     string str() const;
 
-    bool isEqual(Position &pos1, Position &pos2);
+    bool isEqual(MovingObject *mv_obj, Position &position);
     bool isEqual(int in_r, int in_c) const;
      string toString() const;
      int distance (Position pos) const;
@@ -243,15 +243,14 @@ public:
 
 // Robot, BaseItem, BaseBag,...
 class Robot : public MovingObject{
-    private:
+    protected:
      RobotType robot_type;
      BaseItem *item;
      public:
     Robot (RobotType in_rb_type);
     virtual ~Robot() = 0;
     virtual RobotType getType() const;
-    int RobotC ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal ) ;
-    int RobotS ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * Sherlock );
+   
     int RobotW ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Watson * watson ) ;
     int RobotSW( int index,  const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock , Watson* watson );
 };
