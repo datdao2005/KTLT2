@@ -108,9 +108,8 @@ public:
 
     string str() const;
 
-    bool isEqual(MovingObject *mv_obj, Position &position);
-    bool isEqual(int in_r, int in_c) const;
-     string toString() const;
+    bool isEqual(const Position &other) const;
+   // bool isEqual(int in_r, int in_c) const;
      int distance (Position pos) const;
 };
 
@@ -128,7 +127,7 @@ public:
     Position getCurrentPosition() const;
     virtual void move() = 0;
     virtual string str() const = 0;
-    string getCharacter ();
+    string getCharacter();
     
 };
 
@@ -153,10 +152,6 @@ public:
     // move
     // str
     // ...
-   Position getNextPosition();
-   void move();
-   string str()const ;
-
 };
 
 class Watson : public MovingObject {
@@ -184,8 +179,9 @@ public:
 class Criminal : public MovingObject {
 private:
     // TODO
+    string moving_rule;
     int index;
-    const Position & init_pos;
+    Position init_pos;
     Map * map;
     Sherlock * sherlock;
     Watson * watson;
@@ -243,18 +239,57 @@ public:
 
 // Robot, BaseItem, BaseBag,...
 class Robot : public MovingObject{
-    protected:
+    private:
      RobotType robot_type;
      BaseItem *item;
      public:
+     Position getNextPosition() = 0;
+       Position getCurrentPosition() const{}
+        void move() = 0;
     Robot (RobotType in_rb_type);
     virtual ~Robot() = 0;
     virtual RobotType getType() const;
-   
-    int RobotW ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Watson * watson ) ;
-    int RobotSW( int index,  const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock , Watson* watson );
+     virtual int getDistance() = 0;
 };
 
+class RobotC : public Robot {
+    Criminal *criminal;
+    public:
+    RobotC ( int index, const Position & init_pos, Map *map, RobotType robot_type, Criminal *criminal);
+    Position getNextPosition();
+    void move() = 0;
+};
+
+class RobotS : public Robot {
+    Criminal *criminal;
+    Sherlock *sherlock;
+    public:
+   RobotS (int index, const Position & init_pos, Map *map ,RobotType robot_type , Criminal *criminal , Sherlock *sherlock);
+   int getDistance() const;
+   Position getNextPosition();
+   void move() = 0;
+};
+
+class RobotW : public Robot {
+    Criminal *criminal;
+    Watson *watson;
+    public:
+    RobotW ( int index , const Position & init_pos , Map *map , RobotType robot_type , Criminal *criminal , Watson *watson);
+    int getDistance() const;
+    Position getNextPosition();
+    void move() = 0;
+};
+
+class RobotSW : public Robot {
+    Criminal *criminal;
+    Sherlock *sherlock;
+    Watson *watson;
+    public:
+    RobotSW ( int index , const Position &init_pos , Map *map , RobotType robot_type , Criminal *criminal , Sherlock *sherlock , Watson *watson);
+    int getDistance() const;
+    Position getNextPosition();
+    void move() = 0;
+};
 //Vật phẩm
 class BaseItem {
     public: 
@@ -268,17 +303,7 @@ class Sherlock_char : public Character{};
 class Watson_char : public Character{};
 class Criminal_char : public Character{};
 
-class RobotC : public Robot{
-    RobotC *robotC;
-    public:
-    RobotC (int index, const Position &init_pos, Map *map, RobotType robot_type, Criminal *criminal);
-    int getDistance (Sherlock *sherlock);
-    int getDistance (Watson *watson);
-};
-class RobotS : public Robot{
-    RobotS(int index, const Position &init_pos, Map *map, RobotType robot_type, Criminal *criminal, Sherlock *sherlock);
 
-};
 class RobotW : public Robot{};
 class RobotSW : public Robot{};
 
