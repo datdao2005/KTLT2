@@ -48,16 +48,21 @@ Map::Map(int num_rows, int num_cols, int num_walls, Position * array_walls, int 
         delete [] map;
     }
 
-bool Map::isValid ( const Position & pos , MovingObject * mv_obj ) const {
+bool Map::isValid (const Position & pos, MovingObject * mv_obj) const {
    int r = pos.getRow();
    int c = pos.getCol();
+   if (map[r][c] -> getType() == WALL){return false;}
    if(map[r][c] ->getType() == FAKE_WALL && mv_obj ->getCharacter() == "Watson"){
-    FakeWall *ptr;
+    FakeWall *fw;
     Watson *watson;
-    ptr = dynamic_cast<FakeWall*>(map[r][c]);
+    fw = dynamic_cast<FakeWall*>(map[r][c]);
     watson = dynamic_cast<Watson*>(mv_obj);
-    
+     return (watson ->getExp() >fw ->getReqExp());
    }
+   if (r < 0 || r >= num_rows || c < 0 || c >= num_cols){
+        return false;
+   }
+
 }
 
  static const Position npos(-1, -1); //Điểm trả về khi input không hợp lệ 
@@ -72,16 +77,19 @@ bool Map::isValid ( const Position & pos , MovingObject * mv_obj ) const {
      void Position::setRow(int r) { r = r;}
      void Position::setCol(int c) { c = c;}
 
+        bool Position::isEqual(const Position &other) const{
+                return (r == other.r) && (c == other.c);
+        }
     
-     bool Position::isEqual(int in_r, int in_c)const{
+     /*bool Position::isEqual(int in_r, int in_c)const{
         return in_r ==r && in_c == c;
-     }
+     }*/
       Position::Position(const string & str_pos){
         this -> r = stoi(str_pos.substr(1, str_pos.find(',' - 1)));
         this -> c = stoi(str_pos.substr(str_pos.find(',') + 1, str_pos.find(')') - str_pos.find(',') - 1));
       }
      string Position::str() const{return "(" + to_string(r) + "," +to_string(c) + ")";}
-
+        //Khoảng cách Manhattan 
      int Position::distance(Position pos) const{
         int dis_r = pos.getRow() - this -> getRow();
         int dis_c = pos.getCol() - this -> getCol();
@@ -107,9 +115,8 @@ void MovingObject::move(){}
 //Sherlock 
 Sherlock::Sherlock(int index, const string & moving_rule, const Position & init_pos, Map * map, int init_hp, int init_exp) 
 : MovingObject(index, init_pos, map, name) {
-        index = index;
+      
         this -> moving_rule = moving_rule; 
-        this -> init_pos = init_pos;
         this -> init_exp = init_exp;
         this -> init_hp = init_hp;
         
@@ -147,9 +154,8 @@ string Sherlock::str() const{
 //Watson
 Watson::Watson(int index, const string & moving_rule, const Position & init_pos, Map * map, int init_hp, int init_exp)
 :MovingObject(index, init_pos, map, name){
-        index = index;
+        
         this -> moving_rule = moving_rule; 
-        this -> init_pos = init_pos;
         this -> init_exp = init_exp;
         this -> init_hp = init_hp;
         
@@ -181,12 +187,39 @@ void Watson::move(){
 string Watson::str() const{return ;}
 
 //Criminal 
-Criminal::Criminal(int index, const Position & init_pos, Map * map, Sherlock * sherlock, Watson * watson)
-:MovingObject(index, init_pos, map, name)
-{
+Criminal::Criminal(int index, const Position & init_pos, Map * map, Sherlock * sherlock, Watson * watson):
+MovingObject(index, init_pos, map, "Criminal"),sherlock(sherlock), watson(watson){
     
 }
 
+Position Criminal::getNextPosition(){
+    Position currentPos = getCurrentPosition();
+    Position next = Position::npos;
+    int MaxDis = -1;
+    int r = pos.getRow(), c = pos.getCol();
+    Position move[4] = {(1, 0), (0, -1), (-1, 0), (0, 1)};
+    for (int i = 0; i < 4; i++){
+        Position newPos(currentPos.getRow() + move[i].getRow(), currentPos.getCol() + move[i].getCol());
+        if(map->isValid(newPos, this)){
+                int Dis = abs(newPos.getRow() - sherlock->getCurrentPosition().getRow()) + 
+                          abs(newPos.getCol() - sherlock->getCurrentPosition().getCol()) +
+                          abs(newPos.getRow() - watson->getCurrentPosition().getRow())+
+                          abs(newPos.getCol() - watson->getCurrentPosition().getCol());
+            if(Dis > MaxDis){
+                MaxDis = Dis;
+                next = newPos;
+            }
+        }
+    }
+    return next;
+}
+
+Position Criminal::getCurrentPosition()const{return pos;}
+void Criminal::move(){
+    pos = this -> getNextPosition();
+}
+
+string Criminal::str() const {return "Criminal[index=" + to_string(index) + ";" + "pos" ;}
 
 //ArrayMovingObject
  ArrayMovingObject::ArrayMovingObject(int capacity){
@@ -213,7 +246,7 @@ Criminal::Criminal(int index, const Position & init_pos, Map * map, Sherlock * s
  int ArrayMovingObject::size() const{} // return current number of elements in the array
 
  string ArrayMovingObject::str() const{
-    string str =  "ArrayMovingObject[count="+to_string(count)+";capacity="+to_string(capacity);
+    string str = "ArrayMovingObject[count="+to_string(count)+";capacity="+to_string(capacity);
         for (int i = 0; i < count; i++){
             str += arr_mv_objs[i]->str();
         }
@@ -267,30 +300,31 @@ Criminal::Criminal(int index, const Position & init_pos, Map * map, Sherlock * s
     return "Configuration[MAP_NUM_ROWS=" + to_string(map_num_rows) +
     "\nMAP_NUM_COLS="+  to_string(map_num_cols)+
     "\nMAX_NUM_MOVING_OBJECTS=" + to_string(max_num_moving_objects)+
-    "\n ARRAY_WALLS=" + to_string(arr_walls);
+    "\n ARRAY_WALLS=";
  }
 
- Robot::Robot (RobotType rb_type) : robot_type(rb_type){} //Tạo robot
+ Robot::Robot (RobotType in_rb_type) : robot_type(in_rb_type), MovingObject(index, pos, map, name){} //Tạo robot
  RobotType Robot::getType() const {return robot_type;}
- RobotC::RobotC ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal ){
-    criminal = criminal;
- }
 
- RobotS::RobotS( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock){
-    criminal = criminal;
-    sherlock = sherlock;
- }
-
- int Robot::RobotW ( int index , const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Watson * watson ){
-    criminal = criminal;
-    watson = watson;
- }
-
- int Robot::RobotSW( int index,  const Position & init_pos , Map * map ,RobotType robot_type , Criminal * criminal , Sherlock * sherlock , Watson* watson ){
-    watson = watson;
-
+ RobotC::RobotC(int index, const Position & init_pos, Map *map, RobotType robot_type, Criminal *criminal):Robot(C){
 
  }
+
+ Position RobotC::getNextPosition(){
+        return pos = criminal->getCurrentPosition();
+ }
+    
+RobotS::RobotS(int index, const Position & init_pos, Map *map ,RobotType robot_type , Criminal *criminal , Sherlock *sherlock):Robot(S){
+}
+
+Position RobotS::getNextPosition(){
+    //Khúc này sẽ giải quyết sau nhưng mà nhanh thôi :))))
+    for (int i = 0; i < 4; i++){
+        
+    }
+}
+ 
+ 
 
 StudyPinkProgram::StudyPinkProgram(const string & config_file_path){}
 bool StudyPinkProgram::isStop()const{}
