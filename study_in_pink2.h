@@ -20,30 +20,30 @@
 ////////////////////////////////////////////////////////////////////////
 
 // Forward declaration
-// class MovingObject;
-// class Position;
-// class Configuration;
-// class Map;
+ class MovingObject;
+ class Position;
+ class Configuration;
+ class Map;
 
-// class Criminal;
-// class RobotS;
-// class RobotW;
-// class RobotSW;
-// class RobotC;
+ class Criminal;
+ class RobotS;
+ class RobotW;
+ class RobotSW;
+ class RobotC;
 
-// class ArrayMovingObject;
-// class StudyPinkProgram;
+ class ArrayMovingObject;
+ class StudyPinkProgram;
 
-// class BaseItem;
-// class BaseBag;
-// class SherlockBag;
-// class WatsonBag;
+class BaseItem;
+class BaseBag;
+class SherlockBag;
+ class WatsonBag;
 
 class TestStudyInPink;
 
 enum ItemType { MAGIC_BOOK, ENERGY_DRINK, FIRST_AID, EXCEMPTION_CARD, PASSING_CARD };
 enum ElementType { PATH, WALL, FAKE_WALL };
-enum RobotType { C, S, W, SW };
+enum RobotType { C=0, S, W, SW };
 
 class MapElement {
 protected:
@@ -57,15 +57,13 @@ public:
 
 class Path : public MapElement {
     public:
-    Path(): MapElement(PATH){}
-    ~Path(){}
+    Path();
 };
 
 
 class Wall : public MapElement {
     public:
-    Wall():MapElement(WALL){}
-    ~Wall(){}
+    Wall();
 };
 
 class FakeWall : public MapElement {
@@ -73,9 +71,7 @@ class FakeWall : public MapElement {
     int req_exp;
     public:
     FakeWall(int in_req_exp);
-    FakeWall():MapElement(FAKE_WALL){}
-    int getReqExp () const ; 
-    ~FakeWall(){}
+    int getReqExp() const;
 };
 
 class Map {
@@ -88,7 +84,7 @@ public:
     ~Map();
     
     
-    bool isValid ( const Position & pos , MovingObject * mv_obj ) const ;
+    bool isValid (const Position &pos , MovingObject *mv_obj) const ;
 };
 
 class Position {
@@ -109,7 +105,6 @@ public:
     string str() const;
 
     bool isEqual(const Position &other) const;
-   // bool isEqual(int in_r, int in_c) const;
      int distance (Position pos) const;
 };
 
@@ -123,38 +118,51 @@ protected:
 public:
     MovingObject(int index, const Position pos, Map * map, const string & name="");
     virtual ~MovingObject();
-    virtual Position getNextPosition() = 0;
+     Position getNextPosition();
     Position getCurrentPosition() const;
     virtual void move() = 0;
     virtual string str() const = 0;
     string getCharacter();
-    
+   
 };
 
-class Sherlock : public MovingObject {
+class Character : public MovingObject{
+    public:
+    Character(int index, const Position pos, Map * map, const string & name);
+    virtual ~Character(){}
+    virtual int getExp() const = 0;
+    virtual int getHp() const = 0;
+    virtual void setExp(int Exp) = 0;
+    virtual void setHp(int Hp) = 0;
+};
+
+class Sherlock : public Character {
 private:
     // TODO
    string moving_rule;
    Map *map;
-   int index;
+   int index = 0;
    Position init_pos;
-   int init_hp;
-   int init_exp;
+   int init_hp, init_exp;
 public:
-        Position getNextPosition() = 0;
-       Position getCurrentPosition() const{}
-        void move() = 0;
-       string str() const = 0;
+        Position getNextPosition();
+       Position getCurrentPosition() const;
+        void move();
+       string str() const;
        string name;
+       int getExp()const;
+       int getHp()const;
+       void setExp(int Exp);
+       void setHp(int Hp);
     Sherlock(int index, const string & moving_rule, const Position & init_pos, Map * map, int init_hp, int init_exp);
-    
+    ~Sherlock(){}
     // getNextPosition
     // move
     // str
     // ...
 };
 
-class Watson : public MovingObject {
+class Watson : public Character {
 private:
     // TODO
     string moving_rule;
@@ -164,11 +172,15 @@ private:
    int init_hp;
    int init_exp;
 public:
-     Position getNextPosition() = 0;
-       Position getCurrentPosition() const{}
-        void move() = 0;
-       string str() const = 0;
+     Position getNextPosition();
+       Position getCurrentPosition() const;
+        void move();
+       string str() const;
        string name;
+       int getExp()const;
+       int getHp()const;
+       void setExp(int Exp);
+       void setHp(int Hp);
     Watson(int index, const string & moving_rule, const Position & init_pos, Map * map, int init_hp, int init_exp);
     // getNextPosition
     // move
@@ -176,7 +188,7 @@ public:
     // ...
 };
 
-class Criminal : public MovingObject {
+class Criminal : public Character {
 private:
     // TODO
     string moving_rule;
@@ -185,12 +197,19 @@ private:
     Map * map;
     Sherlock * sherlock;
     Watson * watson;
+    Position last_pos = Position::npos;
 public:
-    Position getNextPosition() = 0;
-       Position getCurrentPosition() const{}
-        void move() = 0;
-       string str() const = 0;
+    Position getNextPosition();
+    Position getCurrentPosition() const;
+    Position getLastPosition();
+        void move();
+       string str() const;
        string name;
+       int getExp()const;
+       int getHp()const;
+       void setExp(int Exp);
+       void setHp(int Hp);
+       bool Caught();
     Criminal(int index, const Position & init_pos, Map * map, Sherlock * sherlock, Watson * watson);
     // getNextPosition
     // move
@@ -205,7 +224,6 @@ private:
    MovingObject **arr_mv_objs;
 public:
     ArrayMovingObject(int capacity);
-
     ~ArrayMovingObject() ;
     bool isFull() const;
     bool add(MovingObject * mv_obj);
@@ -220,8 +238,8 @@ class Configuration {
 private:
     // TODO
          int map_num_rows, map_num_cols, max_num_moving_objects, num_walls, num_fake_walls;
-         Position arr_walls;
-         Position arr_fake_walls;
+         Position* arr_walls = new Position[1000];
+         Position* arr_fake_walls = new Position[1000];
          string sherlock_moving_rule;
          Position sherlock_init_pos;
          int sherlock_init_hp, sherlock_init_exp;
@@ -235,107 +253,186 @@ public:
     ~Configuration();
     string str() const;
     void Takedata(string line);
+    int takeNumsteps();
+    Map drawMap();
+    Position getSherlockInitPos() const;
+    string getSherlockMovingRule() const;
+    int getSherlockInitHp() const;
+    int getSherlockInitExp() const;
+    Position getWatsonInitPos() const;
+    string getWatsonMovingRule() const;
+    int getWatsonInitHp() const;
+    int getWatsonInitExp() const;
+    Position getCriminalInitPos() const;
+    int getMaxNumMovingObjects() const;
+    
 };
 
 // Robot, BaseItem, BaseBag,...
 class Robot : public MovingObject{
-    private:
+    protected:
      RobotType robot_type;
      BaseItem *item;
-     public:
-     Position getNextPosition() = 0;
-       Position getCurrentPosition() const{}
-        void move() = 0;
+     Criminal *criminal;
+     Position initPos;
+    public:
+    Robot(int index, const Position &pos, Map *map, Criminal *criminal);
     Robot (RobotType in_rb_type);
-    virtual ~Robot() = 0;
+    virtual ~Robot(){};
     virtual RobotType getType() const;
-     virtual int getDistance() = 0;
+     virtual int getDistance() const = 0;
+    virtual int getDistance(Sherlock * sherlock) const = 0;
+    virtual int getDistance(Watson * watson) const = 0;
+    string str() const;
+    BaseItem *createItem();
+    void setItem();
+    BaseItem *takeItem();
+    int getExp()const;
+    void move();
 };
 
 class RobotC : public Robot {
     Criminal *criminal;
     public:
-    RobotC ( int index, const Position & init_pos, Map *map, RobotType robot_type, Criminal *criminal);
+    RobotC ( int index, const Position & init_pos, Map *map, Criminal *criminal);
     Position getNextPosition();
-    void move() = 0;
+    int getDistance (Sherlock *sherlock) const;
+    int getDistance(Watson *watson)const;
+    int getDistance() const;
+    
 };
 
 class RobotS : public Robot {
     Criminal *criminal;
     Sherlock *sherlock;
     public:
-   RobotS (int index, const Position & init_pos, Map *map ,RobotType robot_type , Criminal *criminal , Sherlock *sherlock);
+   RobotS (int index, const Position & init_pos, Map *map , Criminal *criminal , Sherlock *sherlock);
    int getDistance() const;
+    int getDistance (Sherlock *sherlock) const;
+    int getDistance(Watson *watson)const;
    Position getNextPosition();
-   void move() = 0;
+  
 };
 
 class RobotW : public Robot {
     Criminal *criminal;
     Watson *watson;
     public:
-    RobotW ( int index , const Position & init_pos , Map *map , RobotType robot_type , Criminal *criminal , Watson *watson);
+    RobotW ( int index , const Position & init_pos , Map *map, Criminal *criminal , Watson *watson);
     int getDistance() const;
+    int getDistance (Sherlock *sherlock) const;
+    int getDistance(Watson *watson)const;
     Position getNextPosition();
-    void move() = 0;
+    
 };
 
 class RobotSW : public Robot {
-    Criminal *criminal;
     Sherlock *sherlock;
     Watson *watson;
+    Criminal *criminal;
     public:
-    RobotSW ( int index , const Position &init_pos , Map *map , RobotType robot_type , Criminal *criminal , Sherlock *sherlock , Watson *watson);
+    RobotSW(int index, const Position &init_pos, Map *map, Criminal *criminal, Sherlock *sherlock, Watson *watson);
     int getDistance() const;
+    int getDistance(Sherlock *sherlock)const;
+    int getDistance(Watson *watson)const;
     Position getNextPosition();
-    void move() = 0;
+
 };
 //Vật phẩm
 class BaseItem {
+    friend class TestStudyPink;
+private:
+    RobotType robot_type;
+    ItemType item;
     public: 
+     BaseItem(ItemType item);
     virtual bool canUse ( Character * obj , Robot * robot ) = 0;
     virtual void use ( Character * obj , Robot * robot ) = 0;
+    ItemType getType();
 };
 
 //Các nhân vật
-class Character : public MovingObject{};
-class Sherlock_char : public Character{};
-class Watson_char : public Character{};
-class Criminal_char : public Character{};
 
-
-class RobotW : public Robot{};
-class RobotSW : public Robot{};
 
 //Vật phẩm
-class MagicBook : public BaseItem{};
-class EnergyDrink : public BaseItem{};
-class FirstAid : public BaseItem{};
-class ExcemptionCard : public BaseItem{};
-class PassingCard : public BaseItem{};
-
-//Túi đồ 
-class BaseBag{
-    Character *obj;
+class MagicBook : public BaseItem{
     public:
-    virtual bool insert ( BaseItem * item ) ; // return true if insert successfully
-    virtual BaseItem * get () ; // return the item as described above , if not found , return NULL
-    virtual BaseItem * get ( ItemType itemType ) ; // return the item as described above , if not found , return NULL
-    virtual string str () const ;
+    MagicBook();
+    bool canUse(Character *obj, Robot *robot);
+    void use ( Character * obj, Robot *robot);
+};
+class EnergyDrink : public BaseItem{
+    public:
+    EnergyDrink();
+    bool canUse(Character *obj, Robot *robot);
+    void use(Character * obj, Robot *robot);
+};
+class FirstAid : public BaseItem{
+    public:
+    FirstAid();
+     bool canUse(Character *obj, Robot *robot);
+    void use(Character * obj, Robot *robot);
+};
+class ExcemptionCard : public BaseItem{
+    public:
+    ExcemptionCard();
+     bool canUse(Character *obj, Robot *robot);
+     void use(Character * obj, Robot *robot);
+};
+class PassingCard : public BaseItem{
+    private:
+    string challenge;
+    public:
+    PassingCard(string challenge);
+     bool canUse(Character *obj, Robot *robot);
+     void use(Character * obj, Robot *robot);
 };
 
- class SherlockBag : public BaseBag{};
- class WatsonBag : public BaseBag{};
+//Túi đồ 
+struct Node{
+    BaseItem* item;
+    Node* next;
+    Node(BaseItem* item);
+};
+
+class BaseBag{
+        friend class TestStudyPink;
+    protected:
+    int count;
+    Node *head;
+    Character *obj;
+    public:
+     BaseBag(Character* obj);
+    virtual ~BaseBag();
+    virtual bool insert(BaseItem* item);
+    virtual BaseItem* get(ItemType itemType);
+    virtual BaseItem* get();
+    virtual bool find(ItemType itemType);
+    virtual string str() const;
+    virtual int getNumItem() const;
+};
+
+
+ class SherlockBag : public BaseBag{
+    public:
+    SherlockBag(Sherlock* sherlock);
+     bool insert(BaseItem* item) override;
+ };
+ class WatsonBag : public BaseBag{
+    public:
+    WatsonBag(Watson* watson);
+     bool insert(BaseItem* item) override;
+ };
 
 class StudyPinkProgram {
 private:
     // Sample attributes
     Configuration * config;
-    
     Sherlock * sherlock;
     Watson * watson;
     Criminal * criminal;
-    
+    SherlockBag *sherlockBag;
+    WatsonBag *watsonBag;
     Map * map;
     ArrayMovingObject * arr_mv_objs;
 
@@ -363,23 +460,7 @@ public:
             << sherlock->str() << "--|--" << watson->str() << "--|--" << criminal->str() << endl;
     }
 
-    void run(bool verbose) {
-        // Note: This is a sample code. You can change the implementation as you like.
-        // TODO
-        for (int istep = 0; istep < config->num_steps; ++istep) {
-            for (int i = 0; i < arr_mv_objs->size(); ++i) {
-                arr_mv_objs->get(i)->move();
-                if (isStop()) {
-                    printStep(istep);
-                    break;
-                }
-                if (verbose) {
-                    printStep(istep);
-                }
-            }
-        }
-        printResult();
-    }
+    void run(bool verbose);
 
     ~StudyPinkProgram();
 };
